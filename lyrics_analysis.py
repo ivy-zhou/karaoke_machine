@@ -40,16 +40,19 @@ class Song(object):
 # finds the lyrics for each of the songs
 def getLyrics(songs = []):
     print('Getting the lyrics...')
-    API_key = "68590cf634130c4337150bc268b91a8";
+    API_key = ""; # put your own API key here
     searchQuery = "http://api.musixmatch.com/ws/1.1/track.search?f_has_lyrics=1f&format=xml&apikey={}".format(API_key);
             #"http://api.chartlyrics.com/apiv1.asmx/SearchLyricDirect?" # this one kind of just sucks
             #"http://search.azlyrics.com/search.php?q="; # i got banned from azlyrics
 
     for song in songs:
-        res = requests.get(searchQuery + "&q_track=" + song._title + "&q_artist" + song._artist)
-        #webbrowser.open(searchQuery + "&q_track=" + song._title + "&q_artist" + song._artist)
+        res = requests.get(searchQuery + "&q_track=" + song._title + "&q_artist=" + song._artist)
+        #webbrowser.open(searchQuery + "&q_track=" + song._title + "&q_artist=" + song._artist)
         res.raise_for_status()
         soup = bs4.BeautifulSoup(res.text, "html.parser")
+
+        if (len(soup.findAll("track_id")) == 0):
+            continue
         trackID = soup.findAll("track_id")[0].text
 
         # query for lyrics - due to restrictions from api, we only get 30% of lyrics this way :(
@@ -65,6 +68,9 @@ def getLyrics(songs = []):
         lyrics = lyrics[:cpPos - 1]
 
         song.setLyrics(lyrics)
+
+        print(trackID)
+        print(song)
 
 # updates list of top songs from the current billboard
 def updateTopSongs():
@@ -87,6 +93,8 @@ def updateTopSongs():
             artistPos = nextArtist.find("Featuring") - 1;
         nextSong = Song(titles[i].text, nextArtist[:artistPos])
         topSongs.append(nextSong)
+
+    print(topSongs)
 
     # find the lyrics for each song
     getLyrics(topSongs)
